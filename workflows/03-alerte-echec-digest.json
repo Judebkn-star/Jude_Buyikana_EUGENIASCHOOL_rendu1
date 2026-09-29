@@ -1,0 +1,120 @@
+{
+  "id": "digestalerteerr1",
+  "name": "Digest pipeline · Alerte échec (responsable)",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "En cas d'échec du digest",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "emailResponsable",
+              "name": "emailResponsable",
+              "type": "string",
+              "value": "responsable@entreprise.fr"
+            },
+            {
+              "id": "emailExpediteur",
+              "name": "emailExpediteur",
+              "type": "string",
+              "value": "n8n@entreprise.fr"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "name": "Configuration alerte",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Alerte d'échec sans aucune donnée métier : ni montant, ni nom de client.\nconst e = $input.first().json;\nconst erreur = (e.execution && e.execution.error) || (e.trigger && e.trigger.error) || {};\nconst message = String(erreur.message || 'Erreur inconnue').slice(0, 300);\nconst noeud = (e.execution && e.execution.lastNodeExecuted) || (erreur.node && erreur.node.name) || 'inconnu';\nconst quand = new Intl.DateTimeFormat('fr-FR', {\n  timeZone: 'Europe/Paris', dateStyle: 'short', timeStyle: 'short',\n}).format(new Date());\n\nconst lignes = [\n  `Le digest pipeline Salesforce → Slack a échoué le ${quand} après plusieurs tentatives.`,\n  '',\n  `Workflow : ${(e.workflow && e.workflow.name) || 'inconnu'}`,\n  `Nœud en échec : ${noeud}`,\n  `Erreur : ${message}`,\n];\nif (e.execution && e.execution.url) lignes.push(`Exécution : ${e.execution.url}`);\nlignes.push('', 'Le canal d\\'équipe n\\'a rien reçu aujourd\\'hui. Relancer le workflow à la main une fois le problème corrigé.');\n\nreturn [{\n  json: {\n    sujet: '[Échec] Digest pipeline Salesforce → Slack',\n    corps: lignes.join('\\n'),\n  },\n}];\n"
+      },
+      "name": "Formater alerte sans données",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "={{ $('Configuration alerte').first().json.emailExpediteur }}",
+        "toEmail": "={{ $('Configuration alerte').first().json.emailResponsable }}",
+        "subject": "={{ $json.sujet }}",
+        "emailFormat": "text",
+        "text": "={{ $json.corps }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "name": "Prévenir le responsable",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        720,
+        0
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "En cas d'échec du digest": {
+      "main": [
+        [
+          {
+            "node": "Configuration alerte",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration alerte": {
+      "main": [
+        [
+          {
+            "node": "Formater alerte sans données",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Formater alerte sans données": {
+      "main": [
+        [
+          {
+            "node": "Prévenir le responsable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris"
+  },
+  "pinData": {}
+}

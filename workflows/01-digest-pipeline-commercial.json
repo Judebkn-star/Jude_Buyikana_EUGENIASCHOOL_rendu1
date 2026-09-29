@@ -1,0 +1,398 @@
+{
+  "id": "digestpipeline01",
+  "name": "Digest pipeline commercial (Salesforce → Slack)",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# Specs | Digest pipeline Salesforce → Slack\n\n## 1. Objectif\n\nDiffuser chaque jour ouvré à l'équipe commerciale un rapport du pipeline en cours, avec des alertes sur les opportunités qui demandent une action.\n\n## 2. Déclencheur\n\n- Automatique, du lundi au vendredi à 9h00 (heure de Paris).\n- Pas d'envoi les jours fériés français.\n- Aucune action manuelle requise.\n\n## 3. Livrable\n\n**Dans Slack : un court résumé**\n- Montant total du pipeline.\n- Nombre total d'opportunités.\n\n**En pièce jointe : le rapport HTML complet**, qui contient :\n- le pipeline ouvert, détaillé par étape ;\n- les alertes « en retard » ;\n- les alertes « sans activité ».\n\n## 4. Règles métier\n\n**Périmètre**\n- Toutes les opportunités ouvertes de l'entreprise, toutes étapes incluses.\n- Limitées à celles dont la clôture est prévue sur le trimestre fiscal en cours, tel que défini dans Salesforce.\n- Les alertes respectent la même limite.\n\n**Alerte « en retard »**, si au moins l'un des deux critères est rempli :\n- la date de clôture prévue est dépassée ;\n- l'opportunité est dans la même étape depuis plus de 180 jours.\n\n**Alerte « sans activité »**\n- Aucune activité (appel, email, tâche, réunion) depuis plus de 180 jours.\n\n## 5. Outils et accès\n\n| Outil | Rôle | Statut des accès |\n|---|---|---|\n| Salesforce | Source des données | Acquis |\n| Slack | Diffusion | À obtenir, interlocuteur non identifié |\n\n- Aucune limite connue sur ces outils.\n\n## 6. Destinataires\n\n- Un nouveau canal Slack dédié, créé en canal privé.\n- Membres : l'équipe commerciale et ses managers uniquement, sans invités externes.\n\n## 7. Contraintes opérationnelles\n\n**Volume**\n- 1 exécution par jour ouvré, soit environ 20 par mois.\n\n**Budget**\n- 100 % gratuit par défaut.\n- Un coût n'est acceptable que s'il est indispensable, et une alternative gratuite doit être présentée.\n\n**Gestion des échecs**\n- En cas d'échec de Salesforce ou de Slack : quelques nouvelles tentatives automatiques.\n- Si l'échec persiste : alerte privée envoyée au responsable du processus uniquement.\n- Les membres du canal ne reçoivent aucune alerte d'échec.\n\n**Confidentialité**\n- Les montants et noms de clients ne doivent jamais sortir de l'entreprise.\n- La confidentialité prime sur la gratuité : un coût est préférable à un service externe non validé.\n\n## 8. Planning et risques\n\n- Mise en service souhaitée : aujourd'hui ou demain.\n- **Risque principal** : l'accès d'envoi vers Slack n'est pas encore obtenu, et la personne à contacter n'est pas identifiée. L'échéance en dépend directement.\n- **Point à surveiller** : avec des seuils à 180 jours et un périmètre limité au trimestre en cours, les sections d'alertes risquent de rester souvent vides. Si c'est le cas lors des premiers envois, revoir les seuils.\n\n## 9. Actions préalables\n\n1. Identifier l'administrateur Slack de l'entreprise et lui demander l'autorisation d'envoi automatique.\n2. Créer le canal privé et y inviter l'équipe commerciale et ses managers.\n",
+        "width": 760,
+        "height": 1700,
+        "color": 7
+      },
+      "name": "Specs",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -900,
+        -700
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1-5"
+            }
+          ]
+        }
+      },
+      "name": "Chaque jour ouvré à 9h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Lancement manuel (tests)",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "seuilRetardJours",
+              "name": "seuilRetardJours",
+              "type": "number",
+              "value": 180
+            },
+            {
+              "id": "seuilInactiviteJours",
+              "name": "seuilInactiviteJours",
+              "type": "number",
+              "value": 180
+            },
+            {
+              "id": "devise",
+              "name": "devise",
+              "type": "string",
+              "value": "EUR"
+            },
+            {
+              "id": "inclureLundiPentecote",
+              "name": "inclureLundiPentecote",
+              "type": "boolean",
+              "value": true
+            },
+            {
+              "id": "modeDiffusion",
+              "name": "modeDiffusion",
+              "type": "string",
+              "value": "slack_app"
+            },
+            {
+              "id": "canalSlackId",
+              "name": "canalSlackId",
+              "type": "string",
+              "value": "C0XXXXXXXXX"
+            },
+            {
+              "id": "emailCanal",
+              "name": "emailCanal",
+              "type": "string",
+              "value": ""
+            },
+            {
+              "id": "emailExpediteur",
+              "name": "emailExpediteur",
+              "type": "string",
+              "value": "n8n@entreprise.fr"
+            },
+            {
+              "id": "dateReferenceForcee",
+              "name": "dateReferenceForcee",
+              "type": "string",
+              "value": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Configuration",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        100
+      ],
+      "notes": "Seul endroit à modifier. L'heure d'envoi se règle dans le déclencheur. dateReferenceForcee (AAAA-MM-JJ) sert uniquement aux tests."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Décide si la date de référence (heure de Paris) est un jour ouvré.\n// Fériés mobiles calculés à partir de Pâques : aucune année codée en dur.\nconst cfg = $('Configuration').first().json;\n\nconst dateParis = new Intl.DateTimeFormat('en-CA', {\n  timeZone: 'Europe/Paris',\n  year: 'numeric',\n  month: '2-digit',\n  day: '2-digit',\n}).format(new Date());\nconst dateForcee = String(cfg.dateReferenceForcee || '').trim();\nif (dateForcee && !/^\\d{4}-\\d{2}-\\d{2}$/.test(dateForcee)) {\n  throw new Error(`dateReferenceForcee invalide : \"${dateForcee}\" (format attendu AAAA-MM-JJ)`);\n}\nconst dateReference = dateForcee || dateParis;\nconst [annee, mois, jour] = dateReference.split('-').map(Number);\n\n// Dimanche de Pâques, algorithme de Meeus/Jones/Butcher (calendrier grégorien).\nfunction paques(y) {\n  const a = y % 19;\n  const b = Math.floor(y / 100);\n  const c = y % 100;\n  const d = Math.floor(b / 4);\n  const e = b % 4;\n  const f = Math.floor((b + 8) / 25);\n  const g = Math.floor((b - f + 1) / 3);\n  const h = (19 * a + b - d - g + 15) % 30;\n  const i = Math.floor(c / 4);\n  const k = c % 4;\n  const l = (32 + 2 * e + 2 * i - h - k) % 7;\n  const m = Math.floor((a + 11 * h + 22 * l) / 451);\n  const moisP = Math.floor((h + l - 7 * m + 114) / 31);\n  const jourP = ((h + l - 7 * m + 114) % 31) + 1;\n  return Date.UTC(y, moisP - 1, jourP);\n}\n\nconst JOUR_MS = 86400000;\nconst iso = (ms) => new Date(ms).toISOString().slice(0, 10);\nconst p = paques(annee);\n\nconst feries = {\n  [`${annee}-01-01`]: 'Jour de l\\'an',\n  [iso(p + 1 * JOUR_MS)]: 'Lundi de Pâques',\n  [`${annee}-05-01`]: 'Fête du Travail',\n  [`${annee}-05-08`]: 'Victoire 1945',\n  [iso(p + 39 * JOUR_MS)]: 'Ascension',\n  [`${annee}-07-14`]: 'Fête nationale',\n  [`${annee}-08-15`]: 'Assomption',\n  [`${annee}-11-01`]: 'Toussaint',\n  [`${annee}-11-11`]: 'Armistice 1918',\n  [`${annee}-12-25`]: 'Noël',\n};\nif (cfg.inclureLundiPentecote) {\n  feries[iso(p + 50 * JOUR_MS)] = 'Lundi de Pentecôte';\n}\n\nconst jourSemaine = new Date(Date.UTC(annee, mois - 1, jour)).getUTCDay(); // 0 = dimanche\nlet motif = '';\nif (jourSemaine === 0 || jourSemaine === 6) motif = 'Week-end';\nelse if (feries[dateReference]) motif = `Jour férié : ${feries[dateReference]}`;\n\nreturn [{\n  json: {\n    dateReference,\n    dateForcee: Boolean(dateForcee),\n    estJourOuvre: motif === '',\n    motif,\n  },\n}];\n"
+      },
+      "name": "Vérifier jour férié",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "jour-ouvre",
+              "leftValue": "={{ $json.estJourOuvre }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "Jour ouvré ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        100
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Fin : pas d'envoi aujourd'hui",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        960,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "search",
+        "operation": "query",
+        "query": "SELECT Id, Name, Account.Name, Owner.Name, StageName, Amount,\n       CloseDate, CreatedDate, LastActivityDate, LastStageChangeDate\nFROM Opportunity\nWHERE IsClosed = false AND CloseDate = THIS_FISCAL_QUARTER"
+      },
+      "name": "Lire opportunités Salesforce",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        960,
+        0
+      ],
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Aucun seuil ici : le périmètre seulement. alwaysOutputData garde le flux vivant quand le pipeline est vide."
+    },
+    {
+      "parameters": {
+        "resource": "search",
+        "operation": "query",
+        "query": "SELECT MasterLabel, SortOrder FROM OpportunityStage WHERE IsActive = true"
+      },
+      "name": "Lire ordre des étapes",
+      "type": "n8n-nodes-base.salesforce",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        0
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Totaux, ventilation par étape et alertes. Les seuils viennent du nœud Configuration.\nconst cfg = $('Configuration').first().json;\nconst { dateReference } = $('Vérifier jour férié').first().json;\nconst seuilRetard = Number(cfg.seuilRetardJours);\nconst seuilInactivite = Number(cfg.seuilInactiviteJours);\nif (!Number.isFinite(seuilRetard) || !Number.isFinite(seuilInactivite)) {\n  throw new Error('Seuils invalides dans le nœud Configuration');\n}\n\n// alwaysOutputData renvoie un item vide quand la requête ne trouve rien : on filtre sur Id.\nconst opportunites = $('Lire opportunités Salesforce').all()\n  .map((item) => item.json)\n  .filter((o) => o && o.Id);\n\nconst ordreEtapes = {};\nfor (const item of $('Lire ordre des étapes').all()) {\n  if (item.json && item.json.MasterLabel) ordreEtapes[item.json.MasterLabel] = Number(item.json.SortOrder);\n}\n\nconst JOUR_MS = 86400000;\nconst refMs = Date.parse(`${dateReference}T00:00:00Z`);\n// Les dates Salesforce arrivent en \"AAAA-MM-JJ\" ou en datetime ISO : on garde la partie date.\nconst joursDepuis = (valeur) => {\n  if (!valeur) return null;\n  const ms = Date.parse(`${String(valeur).slice(0, 10)}T00:00:00Z`);\n  return Number.isNaN(ms) ? null : Math.floor((refMs - ms) / JOUR_MS);\n};\n\nconst lignes = opportunites.map((o) => {\n  // LastStageChangeDate vide : l'étape n'a jamais changé, on repart de la création.\n  const depuisEtape = joursDepuis(o.LastStageChangeDate) ?? joursDepuis(o.CreatedDate);\n  const depuisActivite = joursDepuis(o.LastActivityDate);\n  return {\n    id: o.Id,\n    nom: o.Name || '(sans nom)',\n    compte: (o.Account && o.Account.Name) || '',\n    proprietaire: (o.Owner && o.Owner.Name) || '',\n    etape: o.StageName || '(sans étape)',\n    montant: Number(o.Amount) || 0,\n    montantRenseigne: o.Amount !== null && o.Amount !== undefined,\n    dateCloture: o.CloseDate || null,\n    derniereActivite: o.LastActivityDate || null,\n    joursDansEtape: depuisEtape,\n    joursSansActivite: depuisActivite ?? joursDepuis(o.CreatedDate),\n    jamaisActivite: depuisActivite === null,\n  };\n});\n\nconst parEtapeMap = new Map();\nfor (const l of lignes) {\n  if (!parEtapeMap.has(l.etape)) parEtapeMap.set(l.etape, { etape: l.etape, nombre: 0, montant: 0, opportunites: [] });\n  const e = parEtapeMap.get(l.etape);\n  e.nombre += 1;\n  e.montant += l.montant;\n  e.opportunites.push(l);\n}\nconst rang = (etape) => (etape in ordreEtapes ? ordreEtapes[etape] : Number.MAX_SAFE_INTEGER);\nconst parEtape = [...parEtapeMap.values()].sort((a, b) => rang(a.etape) - rang(b.etape) || a.etape.localeCompare(b.etape, 'fr'));\nfor (const e of parEtape) e.opportunites.sort((a, b) => b.montant - a.montant);\n\nconst alertesRetard = [];\nfor (const l of lignes) {\n  const motifs = [];\n  if (l.dateCloture && l.dateCloture < dateReference) motifs.push(`Clôture dépassée (${joursDepuis(l.dateCloture)} j)`);\n  if (l.joursDansEtape !== null && l.joursDansEtape > seuilRetard) motifs.push(`Même étape depuis ${l.joursDansEtape} j`);\n  if (motifs.length) alertesRetard.push({ ...l, motifs });\n}\nalertesRetard.sort((a, b) => (a.dateCloture || '').localeCompare(b.dateCloture || ''));\n\n// Aucune activité : on compte depuis la création (règle documentée dans le README).\nconst alertesInactivite = lignes\n  .filter((l) => l.joursSansActivite !== null && l.joursSansActivite > seuilInactivite)\n  .sort((a, b) => b.joursSansActivite - a.joursSansActivite);\n\nreturn [{\n  json: {\n    dateReference,\n    devise: cfg.devise,\n    seuilRetard,\n    seuilInactivite,\n    total: lignes.reduce((s, l) => s + l.montant, 0),\n    nombre: lignes.length,\n    nombreSansMontant: lignes.filter((l) => !l.montantRenseigne).length,\n    parEtape,\n    alertesRetard,\n    alertesInactivite,\n  },\n}];\n"
+      },
+      "name": "Calculer indicateurs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Rapport HTML autonome : styles inline, aucune ressource externe.\nconst d = $input.first().json;\n\nconst esc = (v) => String(v ?? '')\n  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')\n  .replace(/\"/g, '&quot;').replace(/'/g, '&#39;');\nconst fmtMontant = (n) => new Intl.NumberFormat('fr-FR', {\n  style: 'currency', currency: d.devise || 'EUR', maximumFractionDigits: 0,\n}).format(n || 0);\nconst fmtDate = (s) => (s ? `${s.slice(8, 10)}/${s.slice(5, 7)}/${s.slice(0, 4)}` : '');\nconst pluriel = (n, mot) => `${n} ${mot}${n > 1 ? 's' : ''}`;\n\nconst S = {\n  body: 'margin:0;padding:24px;background:#f5f6f8;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2933;font-size:14px;line-height:1.45;',\n  page: 'max-width:1040px;margin:0 auto;background:#ffffff;border:1px solid #e1e4e8;border-radius:8px;padding:28px;',\n  h1: 'margin:0 0 4px;font-size:22px;',\n  sous: 'margin:0 0 20px;color:#616e7c;',\n  kpis: 'display:flex;gap:16px;flex-wrap:wrap;margin-bottom:28px;',\n  kpi: 'flex:1 1 200px;border:1px solid #e1e4e8;border-radius:6px;padding:14px 16px;',\n  kpiLabel: 'color:#616e7c;font-size:12px;text-transform:uppercase;letter-spacing:.04em;',\n  kpiVal: 'font-size:22px;font-weight:600;margin-top:4px;',\n  h2: 'font-size:17px;margin:32px 0 10px;padding-bottom:6px;border-bottom:2px solid #e1e4e8;',\n  h3: 'font-size:14px;margin:20px 0 6px;',\n  table: 'width:100%;border-collapse:collapse;margin-bottom:8px;',\n  th: 'text-align:left;padding:7px 8px;background:#f0f2f5;border-bottom:1px solid #d5d9de;font-size:12px;color:#3e4c59;',\n  td: 'padding:7px 8px;border-bottom:1px solid #eceef1;vertical-align:top;',\n  num: 'text-align:right;white-space:nowrap;',\n  tot: 'padding:7px 8px;font-weight:600;border-top:2px solid #d5d9de;',\n  vide: 'padding:12px 14px;background:#f0f7f1;border:1px solid #cfe6d3;border-radius:6px;color:#256b33;',\n  note: 'color:#616e7c;font-size:12px;margin-top:28px;',\n};\n\nconst th = (t, num) => `<th style=\"${S.th}${num ? S.num : ''}\">${t}</th>`;\nconst td = (t, num) => `<td style=\"${S.td}${num ? S.num : ''}\">${t}</td>`;\n\n// Section 1 : pipeline par étape (synthèse puis détail).\nlet pipeline;\nif (d.nombre === 0) {\n  pipeline = `<div style=\"${S.vide}\">Aucune opportunité ouverte avec une clôture prévue ce trimestre fiscal.</div>`;\n} else {\n  const synth = d.parEtape.map((e) => `<tr>${td(esc(e.etape))}${td(e.nombre, true)}${td(fmtMontant(e.montant), true)}</tr>`).join('');\n  const detail = d.parEtape.map((e) => `\n    <h3 style=\"${S.h3}\">${esc(e.etape)} · ${pluriel(e.nombre, 'opportunité')} · ${fmtMontant(e.montant)}</h3>\n    <table style=\"${S.table}\"><tr>${th('Opportunité')}${th('Compte')}${th('Propriétaire')}${th('Clôture prévue')}${th('Montant', true)}</tr>\n    ${e.opportunites.map((o) => `<tr>${td(esc(o.nom))}${td(esc(o.compte))}${td(esc(o.proprietaire))}${td(fmtDate(o.dateCloture))}${td(o.montantRenseigne ? fmtMontant(o.montant) : '<em>non renseigné</em>', true)}</tr>`).join('')}\n    </table>`).join('');\n  pipeline = `\n    <table style=\"${S.table}\"><tr>${th('Étape')}${th('Opportunités', true)}${th('Montant', true)}</tr>${synth}\n    <tr><td style=\"${S.tot}\">Total</td><td style=\"${S.tot}${S.num}\">${d.nombre}</td><td style=\"${S.tot}${S.num}\">${fmtMontant(d.total)}</td></tr></table>\n    ${detail}`;\n}\n\n// Section 2 : alertes « en retard ».\nconst retard = d.alertesRetard.length === 0\n  ? `<div style=\"${S.vide}\">Aucune alerte</div>`\n  : `<table style=\"${S.table}\"><tr>${th('Opportunité')}${th('Compte')}${th('Propriétaire')}${th('Étape')}${th('Clôture prévue')}${th('Motif')}${th('Montant', true)}</tr>\n    ${d.alertesRetard.map((o) => `<tr>${td(esc(o.nom))}${td(esc(o.compte))}${td(esc(o.proprietaire))}${td(esc(o.etape))}${td(fmtDate(o.dateCloture))}${td(o.motifs.map(esc).join('<br>'))}${td(fmtMontant(o.montant), true)}</tr>`).join('')}</table>`;\n\n// Section 3 : alertes « sans activité ».\nconst inactivite = d.alertesInactivite.length === 0\n  ? `<div style=\"${S.vide}\">Aucune alerte</div>`\n  : `<table style=\"${S.table}\"><tr>${th('Opportunité')}${th('Compte')}${th('Propriétaire')}${th('Étape')}${th('Dernière activité')}${th('Jours sans activité', true)}${th('Montant', true)}</tr>\n    ${d.alertesInactivite.map((o) => `<tr>${td(esc(o.nom))}${td(esc(o.compte))}${td(esc(o.proprietaire))}${td(esc(o.etape))}${td(o.jamaisActivite ? '<em>aucune activité enregistrée</em>' : fmtDate(o.derniereActivite))}${td(o.joursSansActivite, true)}${td(fmtMontant(o.montant), true)}</tr>`).join('')}</table>`;\n\nconst titre = `Pipeline commercial du ${fmtDate(d.dateReference)}`;\nconst html = `<!DOCTYPE html>\n<html lang=\"fr\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>${titre}</title></head>\n<body style=\"${S.body}\"><div style=\"${S.page}\">\n<h1 style=\"${S.h1}\">${titre}</h1>\n<p style=\"${S.sous}\">Opportunités ouvertes dont la clôture est prévue sur le trimestre fiscal en cours.</p>\n<div style=\"${S.kpis}\">\n  <div style=\"${S.kpi}\"><div style=\"${S.kpiLabel}\">Montant total</div><div style=\"${S.kpiVal}\">${fmtMontant(d.total)}</div></div>\n  <div style=\"${S.kpi}\"><div style=\"${S.kpiLabel}\">Opportunités</div><div style=\"${S.kpiVal}\">${d.nombre}</div></div>\n  <div style=\"${S.kpi}\"><div style=\"${S.kpiLabel}\">En retard</div><div style=\"${S.kpiVal}\">${d.alertesRetard.length}</div></div>\n  <div style=\"${S.kpi}\"><div style=\"${S.kpiLabel}\">Sans activité</div><div style=\"${S.kpiVal}\">${d.alertesInactivite.length}</div></div>\n</div>\n<h2 style=\"${S.h2}\">Pipeline par étape</h2>${pipeline}\n<h2 style=\"${S.h2}\">Alertes « en retard »</h2>\n<p style=\"${S.sous}\">Clôture prévue dépassée, ou même étape depuis plus de ${d.seuilRetard} jours.</p>${retard}\n<h2 style=\"${S.h2}\">Alertes « sans activité »</h2>\n<p style=\"${S.sous}\">Aucune activité (appel, email, tâche, réunion) depuis plus de ${d.seuilInactivite} jours. Sans activité enregistrée, le décompte part de la création de l'opportunité.</p>${inactivite}\n<p style=\"${S.note}\">${d.nombreSansMontant ? `${pluriel(d.nombreSansMontant, 'opportunité')} sans montant, comptée${d.nombreSansMontant > 1 ? 's' : ''} pour 0 dans les totaux. ` : ''}Source : Salesforce. Rapport généré automatiquement par n8n.</p>\n</div></body></html>`;\n\nconst fichierNom = `rapport-pipeline-${d.dateReference}.html`;\nreturn [{\n  json: d,\n  binary: {\n    rapport: {\n      data: Buffer.from(html, 'utf8').toString('base64'),\n      mimeType: 'text/html',\n      fileName: fichierNom,\n      fileExtension: 'html',\n    },\n  },\n}];\n"
+      },
+      "name": "Générer rapport HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Résumé Slack sobre + paramètres de diffusion. Le binaire du rapport suit l'item.\nconst cfg = $('Configuration').first().json;\nconst item = $input.first();\nconst d = item.json;\n\nconst montant = new Intl.NumberFormat('fr-FR', {\n  style: 'currency', currency: d.devise || 'EUR', maximumFractionDigits: 0,\n}).format(d.total);\nconst date = `${d.dateReference.slice(8, 10)}/${d.dateReference.slice(5, 7)}/${d.dateReference.slice(0, 4)}`;\nconst opps = `${d.nombre} opportunité${d.nombre > 1 ? 's' : ''}`;\n\nconst texte = `Pipeline commercial du ${date} (trimestre fiscal en cours) : ${montant} sur ${opps}.\\nRapport complet en pièce jointe.`;\n\nreturn [{\n  json: {\n    texte,\n    titre: `Pipeline commercial du ${date}`,\n    fichierNom: item.binary.rapport.fileName,\n    modeDiffusion: cfg.modeDiffusion,\n    canalSlackId: cfg.canalSlackId,\n    emailCanal: cfg.emailCanal,\n    emailExpediteur: cfg.emailExpediteur,\n  },\n  binary: item.binary,\n}];\n"
+      },
+      "name": "Rédiger résumé Slack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "digestdiffslack1"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "name": "Diffuser (sous-workflow)",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2160,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Chaque jour ouvré à 9h": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lancement manuel (tests)": {
+      "main": [
+        [
+          {
+            "node": "Configuration",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuration": {
+      "main": [
+        [
+          {
+            "node": "Vérifier jour férié",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vérifier jour férié": {
+      "main": [
+        [
+          {
+            "node": "Jour ouvré ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Jour ouvré ?": {
+      "main": [
+        [
+          {
+            "node": "Lire opportunités Salesforce",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fin : pas d'envoi aujourd'hui",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire opportunités Salesforce": {
+      "main": [
+        [
+          {
+            "node": "Lire ordre des étapes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire ordre des étapes": {
+      "main": [
+        [
+          {
+            "node": "Calculer indicateurs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculer indicateurs": {
+      "main": [
+        [
+          {
+            "node": "Générer rapport HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Générer rapport HTML": {
+      "main": [
+        [
+          {
+            "node": "Rédiger résumé Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rédiger résumé Slack": {
+      "main": [
+        [
+          {
+            "node": "Diffuser (sous-workflow)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "errorWorkflow": "digestalerteerr1",
+    "saveManualExecutions": true
+  },
+  "pinData": {}
+}
