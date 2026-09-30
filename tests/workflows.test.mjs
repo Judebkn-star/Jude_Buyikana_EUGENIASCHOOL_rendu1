@@ -10,7 +10,8 @@ function lireNoeudsCode() {
   const noeuds = {};
   for (const fichier of readdirSync(DOSSIER).filter((f) => f.endsWith('.workflow.ts'))) {
     const texte = readFileSync(new URL(fichier, DOSSIER), 'utf8');
-    const motif = /name: '((?:\\.|[^'\\])*)', parameters: \{ jsCode: '/g;
+    // Le nom, puis éventuellement notes / notesInFlow sur la même ligne, puis le code.
+    const motif = /name: '((?:\\.|[^'\\])*)',[^\n]*?parameters: \{ jsCode: '/g;
     let m;
     while ((m = motif.exec(texte))) {
       let i = motif.lastIndex;

@@ -10,7 +10,7 @@
       "regex": "^[A-Z][a-zA-Z0-9\\s()-]*$",
       "errorMessage": "Workflow names must be in Title Case (starting with uppercase) and can contain letters, numbers, spaces, dashes, or parentheses."
     },
-    "requireDescription": true,
+    "requireDescription": false,
     "requireTags": false,
     "minTags": 0,
     "bannedNames": []
@@ -19,8 +19,8 @@
     "naming": {
       "tolerateDefaultNames": true,
       "duplicateSuffixFormat": "parenthesis",
-      "regex": "^[A-Z][a-zA-Z0-9\\s()\\-:/]*$",
-      "errorMessage": "Node names must be in Title Case (starting with uppercase) and can contain letters, numbers, spaces, dashes, parentheses, colons, or forward slashes."
+      "regex": "^[A-ZÀ-ÖØ-Þ].*$",
+      "errorMessage": "Les noms de nœuds commencent par une majuscule. Le français est la langue du projet (CLAUDE.md)."
     },
     "notes": {
       "requireNotes": false,
@@ -47,7 +47,7 @@
     }
   },
   "language": {
-    "enabled": true,
+    "enabled": false,
     "expected": "en",
     "checkFields": [
       "workflow.description",
@@ -132,7 +132,11 @@
     "nodes": {
       "namingRegex": [
         "n8n-nodes-base.webhook"
+      ],
+      "titleCase": [
+        "**"
       ]
     }
-  }
+  },
+  "_comment_projet": "Règles adaptées au projet : noms de nœuds en français, sans Title Case. Ne jamais lancer `lint --fix` : n8ncli croit qu'un nœud IF n'a qu'une sortie et fusionnerait ses branches vrai/faux."
 }

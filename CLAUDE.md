@@ -48,6 +48,7 @@ Workflow n8n qui envoie chaque jour ouvré à 9h00 un résumé du pipeline comme
 - Toute valeur modifiable (seuils, destinataires, heure) regroupée dans un nœud de configuration unique.
 - Aucun secret dans le dépôt. Les `.workflow.ts` ne contiennent que des ID de credentials ; les secrets restent dans n8n et dans `.env` (ignoré, modèle dans `.env.example`).
 - La note Specs du canvas et `docs/specs.md` restent identiques : `npm test` échoue sinon.
+- Ne jamais lancer `n8ncli lint --fix` : il fusionne les branches des nœuds IF (bug n8ncli 1.2.40).
 - Documenter dans un README court : mise en place, paramètres à renseigner, procédure de test.
 
 ## Définition de « terminé »
