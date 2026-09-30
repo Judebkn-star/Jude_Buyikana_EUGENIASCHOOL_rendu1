@@ -19,5 +19,6 @@ Claude Code les charge à la session suivante. Tu peux les appeler par leur nom 
 
 ## État
 
-- `interview` et `doubt` : version 3, non testés sur un vrai projet (voir leur `references/design-rationale.md`).
+- `interview` : version 4 (30/09/2026), questions à cocher et zéro question ouverte. Non testé sur un vrai projet.
+- `doubt` : version 3, non testé sur un vrai projet (voir son `references/design-rationale.md`).
 - `hostile-review` : en cours d'amélioration, premier cycle de tests fait le 30/09/2026.
