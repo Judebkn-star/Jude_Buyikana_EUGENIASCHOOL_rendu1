@@ -1,5 +1,6 @@
 .env
 .env.*
+!.env.example
 tests/sortie/
 .DS_Store
 node_modules/
