@@ -8,6 +8,7 @@ Chaque jour ouvré à 9h (Paris), n8n lit les opportunités ouvertes du trimestr
 .
 ├── README.md             ← tu es ici
 ├── CLAUDE.md             ← consignes pour Claude Code sur ce projet
+├── .env.example          ← variables attendues dans .env (secrets, jamais commité)
 ├── docs/
 │   ├── specs.md          ← règles métier, source de vérité fonctionnelle
 │   └── architecture.md   ← schéma des workflows et choix de conception
@@ -15,16 +16,16 @@ Chaque jour ouvré à 9h (Paris), n8n lit les opportunités ouvertes du trimestr
 │   ├── workflows/        ← les 3 workflows, source unique (synchronisés par n8ncli)
 │   └── config/           ← configuration n8ncli
 ├── tests/
-│   └── code-nodes.test.mjs  ← tests du code des nœuds, lu dans n8n/workflows/
-├── skills/               ← skills Claude du cycle projet (interview, doubt, hostile-review)
-└── package.json          ← raccourcis npm
+│   └── workflows.test.mjs  ← code des nœuds + cohérence de la note Specs
+├── skills/               ← skills Claude : interview, doubt, hostile-review, n8ncli
+└── package.json          ← commandes npm (limitées aux 3 workflows du digest)
 ```
 
 | Workflow | Rôle |
 |---|---|
-| `Digest pipeline commercial` | Principal : jours fériés, Salesforce, calculs, rapport HTML |
-| `Digest pipeline · Diffusion Slack` | Envoi dans Slack. Seule partie à changer si le mode d'accès Slack change |
-| `Digest pipeline · Alerte échec` | Email privé au responsable quand le principal échoue |
+| `Digest Pipeline - Principal` | Principal : jours fériés, Salesforce, calculs, rapport HTML |
+| `Digest Pipeline - Diffusion Slack` | Envoi dans Slack. Seule partie à changer si le mode d'accès Slack change |
+| `Digest Pipeline - Alerte Echec` | Email privé au responsable quand le principal échoue |
 
 Le fonctionnement détaillé est dans [docs/architecture.md](docs/architecture.md).
 
@@ -37,11 +38,16 @@ Les fichiers `n8n/workflows/*.workflow.ts` sont la **seule source** des workflow
 | Récupérer une modification faite dans l'interface n8n | `npm run pull` |
 | Envoyer une modification des `.ts` vers n8n | `npm run push` |
 | Voir ce qui diffère entre local et n8n | `npm run status` |
-| Tester le code des nœuds | `npm test` |
+| Tester le code des nœuds et la note Specs | `npm test` |
+| Vérifier les workflows contre les schémas n8n | `npm run validate` |
+
+Les commandes npm ne visent que les 3 workflows du digest (liste dans `package.json`, clé `config.workflows`). N'utilise pas `n8ncli pull` sans cible : il tirerait tous les workflows du projet n8n.
 
 Après chaque modification : `npm test`, puis commit. Les tests écrivent des rapports d'exemple dans `tests/sortie/` (ignoré par git).
 
-Prérequis : [n8ncli](https://github.com/Workflows-Accelerator/n8n-cli) configuré avec l'environnement `local` (`n8ncli envs test local`).
+Prérequis : [n8ncli](https://github.com/Workflows-Accelerator/n8n-cli) configuré avec l'environnement `local` (`n8ncli envs test local`). Sous Node 25, l'installer avec `--ignore-scripts` : sa dépendance `isolated-vm` ne compile pas.
+
+Secrets : copier `.env.example` en `.env` et le remplir. n8n ne lit pas ce fichier, il sert d'aide-mémoire pour créer les credentials.
 
 ## Mise en place
 
@@ -84,6 +90,6 @@ Les workflows d'erreur ne se déclenchent ni sur un lancement manuel ni en CLI.
 
 ## État au 30/09/2026
 
-- **Fait** : connexion Salesforce (org mono-devise, trimestre fiscal standard), exécution réelle sans envoi, 22 tests du code verts.
-- **Reste** : credentials Slack et SMTP, `canalSlackId`, email du responsable, publication.
+- **Fait** : connexion Salesforce (org mono-devise, trimestre fiscal standard), exécution réelle sans envoi, 23 tests verts.
+- **Reste** : credentials Slack et SMTP, `canalSlackId`, email du responsable, publication, versions des nœuds à monter (`npm run validate`).
 - **Limites connues** : message Slack en double si Slack répond en timeout après avoir publié. `LastStageChangeDate` vide sur l'org : le calcul part de `CreatedDate`.

@@ -10,6 +10,7 @@ Workflow n8n qui envoie chaque jour ouvré à 9h00 un résumé du pipeline comme
 
 - n8n auto-hébergé sous Docker.
 - Credential Salesforce OAuth2 déjà configuré dans n8n.
+- Workflows synchronisés avec n8ncli : `n8n/workflows/*.workflow.ts` est la seule source. Passer par `npm run pull`, `npm run push` et `npm run status`, jamais par un `n8ncli pull` sans cible (il tirerait tous les workflows du projet n8n).
 - Accès Slack non encore obtenu : le mode d'envoi (app Slack, email vers le canal, autre) reste à confirmer. Construire la partie diffusion de façon isolée pour pouvoir la changer sans toucher au reste.
 - Fuseau horaire : Europe/Paris, sur le workflow comme sur le conteneur.
 
@@ -45,13 +46,14 @@ Workflow n8n qui envoie chaque jour ouvré à 9h00 un résumé du pipeline comme
 
 - Noms de nœuds en français, explicites.
 - Toute valeur modifiable (seuils, destinataires, heure) regroupée dans un nœud de configuration unique.
-- Livrer les workflows en JSON importable, sans identifiants de credentials réels.
+- Aucun secret dans le dépôt. Les `.workflow.ts` ne contiennent que des ID de credentials ; les secrets restent dans n8n et dans `.env` (ignoré, modèle dans `.env.example`).
+- La note Specs du canvas et `docs/specs.md` restent identiques : `npm test` échoue sinon.
 - Documenter dans un README court : mise en place, paramètres à renseigner, procédure de test.
 
 ## Définition de « terminé »
 
-- Le workflow s'importe sans erreur dans n8n.
-- Un lancement manuel produit le message Slack et un HTML conforme à `specs.md`.
+- `npm run push` passe sans erreur et `npm test` est vert.
+- Un lancement manuel produit le message Slack et un HTML conforme à `docs/specs.md`.
 - Les cas testés et documentés : jour férié, pipeline vide, sections d'alertes vides, échec Salesforce, échec Slack.
 - Aucune donnée n'est envoyée à un service autre que Salesforce, n8n et Slack.
 

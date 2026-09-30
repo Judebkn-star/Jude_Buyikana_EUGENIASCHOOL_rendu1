@@ -22,7 +22,7 @@ const envoyer_au_canal_par_email = node({
   config: { name: 'Envoyer au canal par email', parameters: { fromEmail: expr('{{ $json.emailExpediteur }}'), toEmail: expr('{{ $json.emailCanal }}'), subject: expr('{{ $json.titre }}'), emailFormat: 'text', text: expr('{{ $json.texte }}'), options: { fileAttachments: 'rapport', appendAttribution: false } }, position: [480, 200], notes: 'Repli : adresse email du canal Slack. SMTP interne uniquement, jamais un service externe.', retryOnFail: true, maxTries: 3, waitBetweenTries: 5000 }
 });
 
-const wf = workflow('digestdiffslack1', 'Digest pipeline · Diffusion Slack', { executionOrder: 'v1', timezone: 'Europe/Paris', callerPolicy: 'workflowsFromSameOwner', availableInMCP: true });
+const wf = workflow('digestdiffslack1', 'Digest Pipeline - Diffusion Slack', { executionOrder: 'v1', timezone: 'Europe/Paris', callerPolicy: 'workflowsFromSameOwner', availableInMCP: true });
 
 export default wf
   .add(re_u_du_digest)

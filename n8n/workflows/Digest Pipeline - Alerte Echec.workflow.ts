@@ -22,7 +22,7 @@ const pr_venir_le_responsable = node({
   config: { name: 'Prévenir le responsable', parameters: { fromEmail: expr('{{ $(\'Configuration alerte\').first().json.emailExpediteur }}'), toEmail: expr('{{ $(\'Configuration alerte\').first().json.emailResponsable }}'), subject: expr('{{ $json.sujet }}'), emailFormat: 'text', text: expr('{{ $json.corps }}'), options: { appendAttribution: false } }, position: [720, 0], retryOnFail: true, maxTries: 3, waitBetweenTries: 5000 }
 });
 
-const wf = workflow('digestalerteerr1', 'Digest pipeline · Alerte échec (responsable)', { executionOrder: 'v1', timezone: 'Europe/Paris', availableInMCP: true });
+const wf = workflow('digestalerteerr1', 'Digest Pipeline - Alerte Echec', { executionOrder: 'v1', timezone: 'Europe/Paris', availableInMCP: true });
 
 export default wf
   .add(en_cas_d_chec_du_digest)

@@ -2,10 +2,14 @@
   "name": "digest-pipeline-salesforce-slack",
   "private": true,
   "description": "Digest quotidien du pipeline Salesforce vers Slack, workflows n8n",
+  "config": {
+    "workflows": "digestpipeline01 digestdiffslack1 digestalerteerr1"
+  },
   "scripts": {
-    "test": "node tests/code-nodes.test.mjs",
-    "pull": "n8ncli pull",
-    "push": "n8ncli push",
-    "status": "n8ncli status"
+    "test": "node tests/workflows.test.mjs",
+    "pull": "for id in $npm_package_config_workflows; do n8ncli pull $id --skip-references || exit 1; done",
+    "push": "for id in $npm_package_config_workflows; do n8ncli push $id || exit 1; done",
+    "status": "for id in $npm_package_config_workflows; do n8ncli status $id || exit 1; done",
+    "validate": "n8ncli validate"
   }
 }

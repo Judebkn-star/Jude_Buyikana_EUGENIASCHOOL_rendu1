@@ -1,4 +1,4 @@
-// Tests du code des nœuds Code, lu directement dans les workflows n8ncli (source unique).
+// Tests des workflows n8ncli (source unique) : code des nœuds Code et note Specs du canvas.
 // Usage : npm test   (rapports d'exemple écrits dans tests/sortie/)
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
@@ -24,6 +24,17 @@ function lireNoeudsCode() {
   return noeuds;
 }
 const CODE = lireNoeudsCode();
+
+// Texte de la note Specs posée sur le canvas du workflow principal.
+function lireNoteSpecs() {
+  const texte = readFileSync(new URL('Digest Pipeline - Principal.workflow.ts', DOSSIER), 'utf8');
+  let i = texte.indexOf("sticky('") + "sticky('".length;
+  let litteral = '';
+  while (texte[i] !== "'") {
+    if (texte[i] === '\\') { litteral += texte[i] + texte[i + 1]; i += 2; } else { litteral += texte[i]; i += 1; }
+  }
+  return Function(`return '${litteral}'`)();
+}
 
 const run = (noeud, nodes, input = []) => {
   if (!CODE[noeud]) throw new Error(`Nœud Code introuvable dans n8n/workflows : ${noeud}`);
@@ -122,6 +133,12 @@ test('Alerte d\'échec sans données métier', () => {
   const r = run('Formater alerte sans données', {}, [{ json: { workflow: { name: 'Digest' }, execution: { lastNodeExecuted: 'Lire opportunités Salesforce', error: { message: 'INVALID_FIELD' }, url: 'http://localhost:5678/x' } } }])[0].json;
   assert.match(r.corps, /Nœud en échec : Lire opportunités Salesforce/);
   assert.match(r.corps, /INVALID_FIELD/);
+});
+
+// ── Specs ──
+test('Note Specs du canvas identique à docs/specs.md', () => {
+  const specs = readFileSync(new URL('../docs/specs.md', import.meta.url), 'utf8');
+  assert.equal(lireNoteSpecs(), specs, 'La note Specs du workflow principal diverge de docs/specs.md : recopier l\'une dans l\'autre');
 });
 
 console.log(`\n${ok} tests passés`);
