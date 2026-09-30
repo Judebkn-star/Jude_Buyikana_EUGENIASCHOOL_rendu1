@@ -4,7 +4,7 @@ Trois workflows n8n. Le principal prépare le rapport sans rien savoir de Slack 
 
 ```mermaid
 flowchart LR
-  subgraph WF1["Digest pipeline commercial"]
+  subgraph WF1["Digest Pipeline - Principal"]
     T1[Chaque jour ouvré à 9h] --> C[Configuration]
     T2[Lancement manuel] --> C
     C --> F[Vérifier jour férié] --> J{Jour ouvré ?}
@@ -12,12 +12,12 @@ flowchart LR
     J -- oui --> SF[Lire opportunités Salesforce] --> ST[Lire ordre des étapes]
     ST --> K[Calculer indicateurs] --> H[Générer rapport HTML] --> R[Rédiger résumé Slack] --> D[Diffuser]
   end
-  subgraph WF2["Diffusion Slack"]
+  subgraph WF2["Digest Pipeline - Diffusion Slack"]
     D --> M{Mode d'envoi}
     M -- slack_app --> S[Publier dans le canal Slack]
     M -- email_canal --> E[Envoyer au canal par email]
   end
-  subgraph WF3["Alerte échec"]
+  subgraph WF3["Digest Pipeline - Alerte Echec"]
     WF1 -. échec persistant .-> A[Formater alerte sans données] --> P[Prévenir le responsable]
   end
 ```
