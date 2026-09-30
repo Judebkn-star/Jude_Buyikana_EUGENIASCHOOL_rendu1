@@ -1,0 +1,11 @@
+{
+  "name": "digest-pipeline-salesforce-slack",
+  "private": true,
+  "description": "Digest quotidien du pipeline Salesforce vers Slack, workflows n8n",
+  "scripts": {
+    "test": "node tests/code-nodes.test.mjs",
+    "pull": "n8ncli pull",
+    "push": "n8ncli push",
+    "status": "n8ncli status"
+  }
+}

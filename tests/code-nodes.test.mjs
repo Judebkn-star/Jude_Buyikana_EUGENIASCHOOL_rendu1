@@ -1,19 +1,42 @@
-// Tests locaux du code des nœuds, avec un faux contexte n8n. Usage : node tests/test.mjs
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+// Tests du code des nœuds Code, lu directement dans les workflows n8ncli (source unique).
+// Usage : npm test   (rapports d'exemple écrits dans tests/sortie/)
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
-const src = (f) => readFileSync(new URL(`../src/${f}`, import.meta.url), 'utf8');
-const run = (file, nodes, input = []) => {
+const DOSSIER = new URL('../n8n/workflows/', import.meta.url);
+
+// Extrait le jsCode de chaque nœud Code, indexé par nom de nœud.
+function lireNoeudsCode() {
+  const noeuds = {};
+  for (const fichier of readdirSync(DOSSIER).filter((f) => f.endsWith('.workflow.ts'))) {
+    const texte = readFileSync(new URL(fichier, DOSSIER), 'utf8');
+    const motif = /name: '((?:\\.|[^'\\])*)', parameters: \{ jsCode: '/g;
+    let m;
+    while ((m = motif.exec(texte))) {
+      let i = motif.lastIndex;
+      let litteral = '';
+      while (texte[i] !== "'") {
+        if (texte[i] === '\\') { litteral += texte[i] + texte[i + 1]; i += 2; } else { litteral += texte[i]; i += 1; }
+      }
+      noeuds[Function(`return '${m[1]}'`)()] = Function(`return '${litteral}'`)();
+    }
+  }
+  return noeuds;
+}
+const CODE = lireNoeudsCode();
+
+const run = (noeud, nodes, input = []) => {
+  if (!CODE[noeud]) throw new Error(`Nœud Code introuvable dans n8n/workflows : ${noeud}`);
   const $ = (nom) => ({ first: () => nodes[nom][0], all: () => nodes[nom] });
   const $input = { first: () => input[0], all: () => input };
-  return new Function('$', '$input', src(file))($, $input);
+  return new Function('$', '$input', CODE[noeud])($, $input);
 };
 const CFG = { seuilRetardJours: 180, seuilInactiviteJours: 180, devise: 'EUR', inclureLundiPentecote: true, modeDiffusion: 'slack_app', canalSlackId: 'C1' };
 let ok = 0;
 const test = (nom, fn) => { fn(); ok += 1; console.log(`ok  ${nom}`); };
 
 // ── Jours fériés ──
-const ferie = (date, extra = {}) => run('verifier-jour-ferie.js', { Configuration: [{ json: { ...CFG, dateReferenceForcee: date, ...extra } }] })[0].json;
+const ferie = (date, extra = {}) => run('Vérifier jour férié', { Configuration: [{ json: { ...CFG, dateReferenceForcee: date, ...extra } }] })[0].json;
 test('Pâques 2027 → lundi 29/03 férié', () => assert.equal(ferie('2027-03-29').motif, 'Jour férié : Lundi de Pâques'));
 test('Ascension 2027 → 06/05', () => assert.equal(ferie('2027-05-06').motif, 'Jour férié : Ascension'));
 test('Lundi de Pentecôte 2026 → 25/05', () => assert.equal(ferie('2026-05-25').estJourOuvre, false));
@@ -28,7 +51,7 @@ test('Sans date forcée → date de Paris', () => assert.match(ferie('').dateRef
 // ── Indicateurs ──
 const REF = '2026-09-29';
 const opp = (o) => ({ json: { Id: o.Id, Name: o.Name, Account: { Name: 'Client <X>' }, Owner: { Name: 'Alice' }, CreatedDate: '2026-07-01T08:00:00.000+0000', ...o } });
-const indicateurs = (opps, cfg = CFG) => run('calculer-indicateurs.js', {
+const indicateurs = (opps, cfg = CFG) => run('Calculer indicateurs', {
   Configuration: [{ json: cfg }],
   'Vérifier jour férié': [{ json: { dateReference: REF } }],
   'Lire opportunités Salesforce': opps,
@@ -62,7 +85,7 @@ test('Pipeline vide (item vide de alwaysOutputData)', () => { const d = indicate
 // ── Rapport HTML et résumé ──
 mkdirSync(new URL('./sortie/', import.meta.url), { recursive: true });
 const rapport = (d, nom) => {
-  const item = run('generer-rapport-html.js', {}, [{ json: d }])[0];
+  const item = run('Générer rapport HTML', {}, [{ json: d }])[0];
   const html = Buffer.from(item.binary.rapport.data, 'base64').toString('utf8');
   writeFileSync(new URL(`./sortie/${nom}.html`, import.meta.url), html);
   return { item, html };
@@ -87,16 +110,16 @@ test('Pipeline vide → message dédié + deux « Aucune alerte »', () => {
 });
 test('Résumé Slack en français', () => {
   const { item } = rapport(indicateurs(JEU), 'rapport-complet');
-  const r = run('rediger-resume.js', { Configuration: [{ json: CFG }] }, [item])[0];
+  const r = run('Rédiger résumé Slack', { Configuration: [{ json: CFG }] }, [item])[0];
   assert.match(r.json.texte, /^Pipeline commercial du 29\/09\/2026 \(trimestre fiscal en cours\) : 18\s500\s€ sur 5 opportunités\./);
   assert.ok(r.binary.rapport);
-  const vide = run('rediger-resume.js', { Configuration: [{ json: CFG }] }, [rapport(indicateurs([{ json: {} }]), 'pipeline-vide').item])[0];
+  const vide = run('Rédiger résumé Slack', { Configuration: [{ json: CFG }] }, [rapport(indicateurs([{ json: {} }]), 'pipeline-vide').item])[0];
   assert.match(vide.json.texte, /0\s€ sur 0 opportunité\./);
 });
 
 // ── Alerte d'échec ──
 test('Alerte d\'échec sans données métier', () => {
-  const r = run('formater-alerte.js', {}, [{ json: { workflow: { name: 'Digest' }, execution: { lastNodeExecuted: 'Lire opportunités Salesforce', error: { message: 'INVALID_FIELD' }, url: 'http://localhost:5678/x' } } }])[0].json;
+  const r = run('Formater alerte sans données', {}, [{ json: { workflow: { name: 'Digest' }, execution: { lastNodeExecuted: 'Lire opportunités Salesforce', error: { message: 'INVALID_FIELD' }, url: 'http://localhost:5678/x' } } }])[0].json;
   assert.match(r.corps, /Nœud en échec : Lire opportunités Salesforce/);
   assert.match(r.corps, /INVALID_FIELD/);
 });
