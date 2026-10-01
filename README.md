@@ -1,3 +1,12 @@
+# Projets n8n de Jude Buyikana (Eugenia School)
+
+| Dossier | Projet |
+|---|---|
+| [`/`](#digest-pipeline-salesforce--slack) (racine) | **Digest pipeline Salesforce → Slack** : résumé quotidien des opportunités du trimestre |
+| [`rag-bibliotheque-n8n/`](rag-bibliotheque-n8n/) | **RAG bibliothèque** : poser des questions à ses livres PDF (n8n + Gemini + Supabase, recherche hybride) |
+
+---
+
 # Digest pipeline Salesforce → Slack
 
 Chaque jour ouvré à 9h (Paris), n8n lit les opportunités ouvertes du trimestre fiscal dans Salesforce et publie dans un canal Slack privé un résumé, avec le rapport HTML complet en pièce jointe.

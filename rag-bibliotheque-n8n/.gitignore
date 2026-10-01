@@ -1,0 +1,20 @@
+
+# n8ncli ignored files
+.env
+n8n/config/sync-state.json
+n8n/config/unconfigured-credentials.json
+n8n/config/workflow-folders.json
+n8n/references/
+.secrets/
+data/
+
+# Réponses du chat (citations du livre)
+tests/results/
+
+# Caches locaux
+n8n/config/cache/
+supabase/.branches/
+supabase/.temp/
+
+# Généré par n8ncli init
+.agents/

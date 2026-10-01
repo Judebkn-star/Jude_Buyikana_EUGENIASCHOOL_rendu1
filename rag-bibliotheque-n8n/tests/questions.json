@@ -1,0 +1,27 @@
+{
+  "_doc": "Jeu de test du RAG. expected = lois dont au moins une doit figurer dans les sources retenues (réussite). also = autres lois pertinentes, comptées pour la couverture des questions de synthèse. type=hors_sujet : le chat doit répondre « Le livre ne répond pas à cette question. ». Lois attendues vérifiées sur les titres et le texte en base (table chunks), pas de mémoire.",
+  "questions": [
+    { "id": "F1", "type": "factuelle", "question": "Que dit la loi 15 ?", "expected": [15] },
+    { "id": "F2", "type": "factuelle", "question": "Pourquoi faut-il dissimuler ses intentions ?", "expected": [3] },
+    { "id": "F3", "type": "factuelle", "question": "Pourquoi vaut-il mieux en dire moins que nécessaire ?", "expected": [4], "also": [38] },
+    { "id": "F4", "type": "factuelle", "question": "Que conseille le livre à propos d'un ennemi qu'on vient de vaincre ?", "expected": [15] },
+
+    { "id": "A1", "type": "application", "question": "Mon meilleur ami me demande de l'embaucher dans mon équipe. Est-ce une bonne idée ?", "expected": [2] },
+    { "id": "A2", "type": "application", "question": "Une personne toxique sème la zizanie dans mon équipe et tout le monde se dispute. Que faire ?", "expected": [42], "also": [10] },
+    { "id": "A3", "type": "application", "question": "Je viens d'être promu à la place d'un chef très apprécié. Comment m'imposer sans être comparé à lui ?", "expected": [41], "also": [45] },
+    { "id": "A4", "type": "application", "question": "Je négocie avec quelqu'un qui me presse de conclure tout de suite. Comment garder l'avantage ?", "expected": [8, 35], "also": [16, 39] },
+
+    { "id": "S1", "type": "synthese", "question": "Quelles lois parlent de la réputation ?", "expected": [5], "also": [6, 26, 37] },
+    { "id": "S2", "type": "synthese", "question": "Quelles lois conseillent de savoir s'arrêter ou de ne pas aller trop loin ?", "expected": [47], "also": [22, 46] },
+    { "id": "S3", "type": "synthese", "question": "Quelles lois recommandent de rester imprévisible ou de cacher son jeu ?", "expected": [17, 3], "also": [14, 48] },
+    { "id": "S4", "type": "synthese", "question": "Quelles lois parlent de la patience et de la maîtrise du temps ?", "expected": [35], "also": [29, 16] },
+
+    { "id": "H1", "type": "historique", "question": "Que raconte le livre sur Nicolas Fouquet ?", "expected": [1] },
+    { "id": "H2", "type": "historique", "question": "Que raconte le livre sur Nikola Tesla ?", "expected": [7], "also": [5, 6, 23] },
+    { "id": "H3", "type": "historique", "question": "Quel rôle joue Ninon de Lenclos dans le livre ?", "expected": [3, 16], "also": [28, 31] },
+
+    { "id": "X1", "type": "hors_sujet", "question": "Quelle est la meilleure recette de crêpes bretonnes ?" },
+    { "id": "X2", "type": "hors_sujet", "question": "Quelle est la capitale de l'Australie ?" },
+    { "id": "X3", "type": "hors_sujet", "question": "Comment installer Python sur un Mac ?" }
+  ]
+}
