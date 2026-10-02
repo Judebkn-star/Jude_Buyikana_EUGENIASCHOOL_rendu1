@@ -53,8 +53,12 @@ const KW_STOP = new Set(('le la les un une des du de d l au aux et ou en dans su
   'est sont etre avoir fait faire dit dire peut peux comment pourquoi quand combien selon entre leur leurs son ses sa mon ma mes ton ta tes ' +
   'nous vous ils elles elle lui cela cette ces cet tout tous toute toutes plus moins tres bien aussi alors donc mais comme ainsi ' +
   'livre livres chapitre chapitres loi lois auteur parle parlent raconte racontent explique conseille quelles quelqu un ' +
-  'the a an and or of to in on for with without what which who whom how why when does do is are was were be book chapter about says').split(' '));
-const bookWords = new Set(books.flatMap((b) => norm(`${b.title} ${b.author}`).split(' ')));
+  'joue jouent jouer agir rend rendre utilise utiliser permet permettre devient devenir veut vouloir doit devoir faut aller mettre prendre donner existe ' +
+  'the a an and or of to in on for with without what which who whom how why when does do is are was were be book chapter about says ' +
+  'play plays make makes use uses should could would can will').split(' '));
+// Les mots d'un titre (« pouvoir », « finance ») ne sont écartés que si la question nomme ce livre :
+// sinon ils sont souvent le sujet même de la question.
+const bookWords = new Set(named.flatMap((b) => norm(`${b.title} ${b.author}`).split(' ')));
 const keywords = [...new Set(norm(text).split(' '))]
   .filter((w) => w.length >= 4 && !KW_STOP.has(w) && !/^\d+$/.test(w) && !bookWords.has(w))
   .slice(0, 8);

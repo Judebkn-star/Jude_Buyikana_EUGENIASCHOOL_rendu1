@@ -8,8 +8,21 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 NET=supabase_network_rag-48-lois
 
+command -v colima >/dev/null || { echo "ERREUR : Colima est requis (brew install colima docker)."; exit 1; }
+if ! grep -q '^  ip: 127.0.0.1' ~/.colima/default/colima.yaml 2>/dev/null; then
+  cat <<'MSG'
+ERREUR : Colima publie les ports de Docker sur toutes les interfaces (Wi-Fi compris).
+Pour les limiter à ce Mac, ouvre ~/.colima/default/colima.yaml (colima start --edit) et remplace la ligne
+    docker: {}
+par
+    docker:
+      ip: 127.0.0.1
+puis relance : colima stop && colima start --cpu 4 --memory 6
+MSG
+  exit 1
+fi
 colima status >/dev/null 2>&1 || colima start
-grep -q '^  ip: 127.0.0.1' ~/.colima/default/colima.yaml || { echo "ERREUR : docker.ip ≠ 127.0.0.1 dans colima.yaml"; exit 1; }
+docker inspect n8n >/dev/null 2>&1 || { echo "ERREUR : aucun conteneur « n8n ». Voir README, « Installation »."; exit 1; }
 
 if ! docker network inspect $NET --format '{{index .Options "com.docker.network.bridge.host_binding_ipv4"}}' 2>/dev/null | grep -q 127.0.0.1; then
   supabase stop >/dev/null 2>&1 || true

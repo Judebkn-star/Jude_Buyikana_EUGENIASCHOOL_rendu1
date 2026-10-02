@@ -76,11 +76,14 @@ Si Gemini refuse (quota, réseau), le chat l'explique au lieu d'afficher une err
 
 ## Mesures
 
-Jeu de test de 18 questions sur les 48 lois (`tests/questions.json`), mesuré le 01/10/2026 avant la refonte en bibliothèque :
+Jeu de test de 18 questions sur les 48 lois (`tests/questions.json`) :
 
-| Questions sur le livre | Hors sujet refusées | Citations |
-|---|---|---|
-| 14/15 (factuelles 4/4, application 3/4, synthèse 4/4, historiques 3/3) | 3/3 | 97 authentiques, 17 corrigées |
+| Mesure | Livre | Hors sujet refusées | Couverture des synthèses | Citations |
+|---|---|---|---|---|
+| 01/10/2026, version un seul livre | 14/15 (application 3/4) | 3/3 | 7/14 | 97 authentiques, 17 corrigées |
+| 02/10/2026, version bibliothèque | **15/15** | 3/3 | 5/14 | 77 authentiques, 28 corrigées |
+
+La refonte corrige l'échec A3 (refus à tort) ; les synthèses citent un peu moins de lois différentes et la génération produit plus de fausses citations (toutes dé-guillemetées par le contrôle) : deux pistes d'amélioration.
 
 Livres testés de bout en bout : *Les 48 lois du pouvoir* (1 128 pages, 48 lois) et *AI in Finance* (ouvrage collectif en anglais, 271 pages, 11 chapitres).
 

@@ -2,7 +2,7 @@
 # Pose une question au chat (workflow C) en ligne de commande.
 # Usage : scripts/ask.sh "<question>" [sessionId]
 SESSION="${2:-cli-$(date +%s)}"
-curl -s -m 180 -X POST "http://localhost:5678/webhook/6f9792c4-9e03-4f4a-bc44-8664b907b3c8/chat" \
+curl -s -m 180 -X POST "${CHAT_URL:-http://localhost:5678/webhook/6f9792c4-9e03-4f4a-bc44-8664b907b3c8/chat}" \
   -H "Content-Type: application/json" \
   -d "$(python3 -c 'import json,sys;print(json.dumps({"action":"sendMessage","sessionId":sys.argv[1],"chatInput":sys.argv[2]}))' "$SESSION" "$1")" \
 | python3 -c 'import sys,json

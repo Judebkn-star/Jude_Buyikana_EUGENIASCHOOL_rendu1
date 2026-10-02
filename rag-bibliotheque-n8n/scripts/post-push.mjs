@@ -14,7 +14,27 @@ const apiKey = JSON.parse(fs.readFileSync(path.join(os.homedir(), '.n8ncli-globa
 const headers = { 'X-N8N-API-KEY': apiKey, 'Content-Type': 'application/json' };
 const SETTINGS = ['executionOrder', 'saveManualExecutions', 'callerPolicy', 'errorWorkflow', 'timezone', 'saveDataErrorExecution', 'saveDataSuccessExecution', 'saveExecutionProgress', 'executionTimeout'];
 
-export const WF = { ingestion: 'YkebzK0aKqfvoJfw', augmentation: 'Qlh0nO72Mbq7tIRM', answering: 'UwfDLlHjK7X315aK' };
+// Les workflows sont retrouvés par leur nom (celui de scripts/build-workflows.mjs) : leurs identifiants changent
+// d'une instance n8n à l'autre. L'identifiant du webhook du chat, lui, est fixé ici : l'URL du chat est la même partout.
+const NAMES = {
+  ingestion: 'RAG – A. Ajouter un livre (formulaire)',
+  augmentation: 'RAG – B. Fiches + vectorisation',
+  answering: 'RAG – C. Chat bibliothèque',
+};
+const list = [];
+for (let cursor = ''; ; ) {
+  const page = await (await fetch(`${BASE}/workflows?limit=250${cursor ? `&cursor=${cursor}` : ''}`, { headers })).json();
+  list.push(...(page.data || []));
+  if (!page.nextCursor) break;
+  cursor = page.nextCursor;
+}
+export const WF = Object.fromEntries(
+  Object.entries(NAMES).map(([key, name]) => {
+    const found = list.filter((w) => w.name === name && !w.isArchived);
+    if (found.length !== 1) throw new Error(`Workflow « ${name} » : ${found.length} trouvé(s) dans n8n. Lance d'abord n8ncli push.`);
+    return [key, found[0].id];
+  })
+);
 export const CHAT_WEBHOOK_ID = '6f9792c4-9e03-4f4a-bc44-8664b907b3c8';
 
 async function update(id, change) {

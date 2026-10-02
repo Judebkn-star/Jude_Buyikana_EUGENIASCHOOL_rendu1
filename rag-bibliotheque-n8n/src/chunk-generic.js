@@ -18,17 +18,23 @@ const PART_CHARS = 30000;
 const MIN_GAP = 12; // lignes minimum entre deux débuts de chapitre (une table des matières est plus dense)
 
 const form = $('On form submission').first().json;
-const title = String(form.titre || '').trim();
-if (!title) throw new Error('Le titre du livre est obligatoire.');
+const edition = String(form.edition || '').trim();
+const baseTitle = String(form.titre || '').trim();
+if (!baseTitle) throw new Error('Le titre du livre est obligatoire.');
+// Deux éditions d'un même titre (deux traductions de « Le Prince ») sont deux livres : l'édition s'affiche dans les sources.
+const title = edition ? `${baseTitle} (${edition})` : baseTitle;
 const language = /^en/i.test(form.langue || '') ? 'en' : 'fr';
 const chapterLabel = String(form.libelle || '').trim() || (language === 'en' ? 'Chapter' : 'Chapitre');
-const slug = title
+// Identifiant du livre : titre + auteur + édition. Le même livre renvoyé est reconnu (pas de doublon),
+// une autre édition ou un autre auteur ne l'est pas.
+const slug = `${baseTitle} ${form.auteur || ''} ${edition}`
   .normalize('NFD')
   .replace(/[̀-ͯ]/g, '')
   .toLowerCase()
   .replace(/[^a-z0-9]+/g, '-')
   .replace(/^-|-$/g, '')
-  .slice(0, 60);
+  .slice(0, 80)
+  .replace(/-$/, '');
 
 const { lines } = $('Nettoyage').first().json;
 

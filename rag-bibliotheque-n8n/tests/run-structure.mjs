@@ -31,7 +31,11 @@ const frForm = { titre: 'Traité des stratagèmes', auteur: 'Anonyme', langue: '
 const frTitles = ['De la ruse', 'De la patience', "De l'alliance", 'Du silence', 'De la réputation'];
 let r = pipeline(fr, frForm, toc(frTitles));
 check('FR, table des matières (titres seuls)', r, { method: 'toc', chapters: 5, firstTitle: /De la ruse/ });
-assert.ok(r.rows.some((x) => x.chunk_id === 'traite-des-stratagemes/ch-001/000'), 'ids slugifiés');
+assert.equal(r.book.slug, 'traite-des-stratagemes-anonyme', 'identifiant = titre + auteur');
+assert.ok(r.rows.some((x) => x.chunk_id === 'traite-des-stratagemes-anonyme/ch-001/000'), 'ids slugifiés');
+const r2 = pipeline(fr, { ...frForm, edition: 'trad. Dupont, 1902' }, toc(frTitles));
+assert.notEqual(r2.book.slug, r.book.slug, 'une autre édition est un autre livre');
+assert.equal(r2.book.title, 'Traité des stratagèmes (trad. Dupont, 1902)', 'l’édition s’affiche dans le titre');
 assert.ok(!r.rows.some((x) => x.kind === 'section' && /TABLE DES MATI/i.test(x.content)), 'la table des matières reste hors des chapitres');
 assert.ok(!r.rows.some((x) => /TRAITÉ DES STRATAGÈMES/.test(x.content) && x.kind === 'section'), 'titre courant retiré');
 assert.ok(r.rows.some((x) => x.kind === 'back_matter'), 'index détecté en annexe');

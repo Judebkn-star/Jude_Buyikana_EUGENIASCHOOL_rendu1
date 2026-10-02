@@ -38,18 +38,35 @@ Le projet est né sur *Les 48 lois du pouvoir* (Robert Greene), puis a été gé
 
 ## Prérequis
 
-- macOS avec [Colima](https://github.com/abiosoft/colima) (ou Docker Desktop), [Supabase CLI](https://supabase.com/docs/guides/cli), Node.js 20+
-- n8n en conteneur Docker nommé `n8n`, et [`n8ncli`](https://www.npmjs.com/package/@workflows-accelerator/n8n-cli) configuré pour cette instance
+- macOS avec [Colima](https://github.com/abiosoft/colima) (`brew install colima docker`), [Supabase CLI](https://supabase.com/docs/guides/cli), Node.js 20+
+- [`n8ncli`](https://www.npmjs.com/package/@workflows-accelerator/n8n-cli) (`npm install -g @workflows-accelerator/n8n-cli`)
 - Une clé API Gemini (Google AI Studio ; le tier gratuit suffit)
 
 ## Installation
 
-```bash
-scripts/start-env.sh              # Colima + Supabase + réseau n8n, tous les ports sur 127.0.0.1 (vérifié)
-supabase migration up --local     # crée books, chunks, documents, recherche hybride, mémoire du chat
-```
+1. **Limiter Docker à ce Mac.** Dans `~/.colima/default/colima.yaml` (`colima start --edit`), remplace `docker: {}` par :
+   ```yaml
+   docker:
+     ip: 127.0.0.1
+   ```
+   puis `colima stop && colima start --cpu 4 --memory 6`. Sans ce réglage, n8n et Supabase répondraient à tout le Wi-Fi.
+2. **Créer le conteneur n8n** (une seule fois) :
+   ```bash
+   docker run -d --name n8n --restart unless-stopped -p 5678:5678 -v n8n_data:/home/node/.n8n docker.n8n.io/n8nio/n8n
+   ```
+   Ouvre http://localhost:5678, crée ton compte, puis une clé d'API (Settings → n8n API).
+3. **Démarrer la base** :
+   ```bash
+   scripts/start-env.sh              # Supabase + réseau n8n, vérifie qu'aucun port n'est exposé
+   supabase migration up --local     # crée books, chunks, documents, recherche hybride, mémoire du chat
+   ```
+4. **Relier n8ncli à ton instance** (remplace la configuration du dépôt, qui vise l'instance de l'auteur) :
+   ```bash
+   n8ncli projects --access-token <jeton MCP n8n>        # repère l'identifiant de ton projet
+   n8ncli init --url http://localhost:5678 --access-token <jeton> --api-key <clé API> --project-id <id> --env local
+   ```
 
-Dans n8n, crée trois credentials puis reporte leurs identifiants dans `n8n/config/credentials.json` :
+5. **Créer les credentials.** Dans n8n, crée ces trois credentials, puis reporte leurs identifiants dans `n8n/config/credentials.json` :
 
 | Credential | Type | Valeurs |
 |---|---|---|
@@ -57,7 +74,7 @@ Dans n8n, crée trois credentials puis reporte leurs identifiants dans `n8n/conf
 | Postgres RAG | Postgres | hôte `supabase_db_rag-48-lois`, port 5432, base/utilisateur/mot de passe `postgres`, SSL désactivé |
 | Supabase RAG | Supabase API | hôte `http://supabase_kong_rag-48-lois:8000`, clé `service_role` du Supabase local |
 
-Puis déploie les workflows :
+6. **Déployer les workflows** (le premier push les crée ; `post-push.mjs` les retrouve par leur nom) :
 
 ```bash
 node scripts/build-workflows.mjs  # génère n8n/workflows/*.ts depuis src/
@@ -96,7 +113,7 @@ node tests/run-eval.mjs           # 18 questions via le vrai chat (~54 appels Ge
 | `scripts/start-env.sh` | démarre l'environnement sans exposer de port |
 | `scripts/build-workflows.mjs` | génère les 4 workflows depuis `src/` (prompts et SQL inclus) |
 | `scripts/post-push.mjs` | après un push : réépingle les données de test de A, fixe l'URL du chat, republie A, B, C |
-| `scripts/ask.sh` / `scripts/chat.sh` | poser une question en ligne de commande / ouvrir le chat |
+| `scripts/ask.sh` / `scripts/chat.sh` | poser une question en ligne de commande / ouvrir le chat (`CHAT_URL=…` pour une autre adresse) |
 | `scripts/remove-book.sh` | retirer un livre (vecteurs, morceaux, fiche) |
 
 ## Limites
