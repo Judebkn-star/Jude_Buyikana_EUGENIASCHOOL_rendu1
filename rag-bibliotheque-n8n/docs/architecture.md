@@ -85,11 +85,12 @@ Jeu de test de 18 questions sur les 48 lois (`tests/questions.json`) :
 
 La refonte corrige l'échec A3 (refus à tort) ; les synthèses citent un peu moins de lois différentes et la génération produit plus de fausses citations (toutes dé-guillemetées par le contrôle) : deux pistes d'amélioration.
 
-Livres testés de bout en bout : *Les 48 lois du pouvoir* (1 128 pages, 48 lois) et *AI in Finance* (ouvrage collectif en anglais, 271 pages, 11 chapitres).
+Livres testés de bout en bout : *Les 48 lois du pouvoir* (1 128 pages, 48 lois), *AI in Finance* (ouvrage collectif en anglais, 271 pages, 11 chapitres) et *The Theory of Poker* de David Sklansky (anglais, 25 chapitres, 230 morceaux, prêt environ 20 minutes après l'envoi).
 
 ## Limites connues
 
 - **Quota gratuit Gemini** : environ 500 appels de génération par jour et environ 20 embeddings par minute, partagés entre l'ingestion et le chat.
 - **Pages à deux colonnes** : pdf.js mélange les colonnes ligne à ligne ; le texte reste présent mais en désordre.
 - **PDF scannés** : refusés, il faut une couche texte (pas d'OCR).
+- **Chapitres numérotés en toutes lettres** (« Chapter One », « Chapitre premier ») : le découpage est juste, mais le titre affiché dans les sources reste « Chapter One » au lieu du vrai titre.
 - **Usage local** : tous les services écoutent sur 127.0.0.1, sans authentification.
