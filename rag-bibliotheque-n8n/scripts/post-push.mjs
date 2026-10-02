@@ -54,13 +54,15 @@ async function update(id, change) {
   return out;
 }
 
-// Données de test de A (sortie réelle d'une extraction) : facultatives, hors git car elles contiennent le texte d'un livre.
+// Données de test de A : désactivées par défaut. Épinglées, elles remplaçaient le vrai PDF lors d'un ajout depuis l'éditeur
+// (un « Theory of Poker » a ainsi reçu le texte des 48 lois). Ne les réactiver que pour un test, puis les retirer.
 const PIN_FILE = path.join(root, 'data/pin-ingestion-A.json');
 const pin = fs.existsSync(PIN_FILE) ? JSON.parse(fs.readFileSync(PIN_FILE, 'utf8')) : null;
 const a = await update(WF.ingestion, (b) => {
-  if (pin) b.pinData = Object.fromEntries(Object.entries(pin).map(([node, items]) => [node, items.map((json) => ({ json }))]));
+  // Sans fichier, on retire tout épinglage : un texte épinglé remplace le vrai PDF lors d'un ajout depuis l'éditeur.
+  b.pinData = pin ? Object.fromEntries(Object.entries(pin).map(([node, items]) => [node, items.map((json) => ({ json }))])) : {};
 });
-console.log('A :', pin ? `nœuds épinglés : ${Object.keys(a.pinData || {}).join(', ')}` : 'pas de données de test (data/pin-ingestion-A.json absent), republié');
+console.log('A :', pin ? `nœuds épinglés : ${Object.keys(a.pinData || {}).join(', ')}` : 'aucune donnée épinglée, republié');
 
 const c = await update(WF.answering, (b) => {
   for (const n of b.nodes) if (n.type.endsWith('chatTrigger')) n.webhookId = CHAT_WEBHOOK_ID;

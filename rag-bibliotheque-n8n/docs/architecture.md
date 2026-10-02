@@ -41,7 +41,7 @@ La structure se détermine en trois niveaux, du plus fiable au plus rustique :
 Deux flux partent du même déclencheur planifié :
 
 - **Flux 1, les fiches** : un appel Gemini par chapitre (résumé, thèmes, personnes citées, questions). Budget de 300 fiches par jour, pour laisser du quota au chat.
-- **Flux 2, la vectorisation** : les morceaux dont le chapitre a sa fiche reçoivent le début de cette fiche comme contexte, puis passent par Embeddings Google Gemini. 40 morceaux par passage, la limite du quota gratuit d'embeddings par minute.
+- **Flux 2, la vectorisation** : les morceaux dont le chapitre a sa fiche reçoivent le début de cette fiche comme contexte. Un nœud HTTP envoie tout le lot à l'API Gemini `batchEmbedContents` en un seul appel, puis un nœud Postgres insère les vecteurs dans `documents`. 40 morceaux par passage, la limite du quota gratuit d'embeddings par minute. Les vecteurs sont identiques à ceux de l'ancien nœud LangChain (similarité 1,000000 mesurée).
 
 Garde-fous :
 - un morceau ne passe en `done` que si son vecteur existe vraiment en base ;
@@ -71,7 +71,7 @@ Si Gemini refuse (quota, réseau), le chat l'explique au lieu d'afficher une err
 | File d'attente en base entre A et B | Une panne ne touche qu'un lot ; reprise automatique | Un seul workflow de plusieurs heures |
 | Une fiche Gemini par chapitre | Un livre prêt en 15 à 20 min sur le tier gratuit | Une fiche par morceau : 2 à 3 jours par livre |
 | Recherche hybride RRF | Les noms propres et termes rares (« Talleyrand ») sont trouvés à coup sûr | Vectoriel seul |
-| Recherche en SQL plutôt que le nœud Vector Store | Filtre par livre et fusion avec le plein texte | Nœud LangChain, sans filtre dynamique |
+| Recherche et insertion en SQL + HTTP plutôt que le nœud Vector Store | Filtre par livre, fusion avec le plein texte, erreurs Gemini lisibles (un 429 reste un 429) | Nœud LangChain : sans filtre dynamique, et un refus de quota y devient « vector must have at least 1 dimension » |
 | Code des nœuds dans `src/`, workflows générés | Code testable hors n8n, une seule source | Code édité dans l'interface n8n |
 
 ## Mesures

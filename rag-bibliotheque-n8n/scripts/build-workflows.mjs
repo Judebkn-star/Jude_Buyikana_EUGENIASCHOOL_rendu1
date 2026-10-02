@@ -232,20 +232,22 @@ select (select count(*) from ok)::int as done,
        ((select count(*) from public.chunks where status <> 'done') - (select count(*) from ok))::int as remaining,
        (select count(*) from public.chunks where status = 'error' and attempts >= 5)::int as abandoned;`;
 
-const META = ['chunk_id', 'kind', 'book_id', 'book_title', 'book_author', 'chapter_label', 'chapter_number', 'chapter_title', 'section', 'page_start', 'page_end', 'raw_text', 'context'];
-const META_LISTS = ['keywords', 'questions', 'people'];
-const metadataValues = [
-  ...META.map((k) => `{ name: ${q(k)}, value: expr(${q(`{{ $json.${k} ?? '' }}`)}) }`),
-  ...META_LISTS.map((k) => `{ name: ${q(k)}, value: expr(${q(`{{ ($json.${k} || []).join(' | ') }}`)}) }`),
-].join(', ');
+// Insertion directe des vecteurs (remplace le Vector Store LangChain) : un morceau déjà présent n'est pas dupliqué.
+const INSERT_VECTORS_SQL = `with r as (
+  select * from jsonb_to_recordset($1::jsonb) as x(content text, metadata jsonb, embedding text)
+), ins as (
+  insert into public.documents (content, metadata, embedding)
+  select r.content, r.metadata, r.embedding::extensions.vector from r
+  on conflict ((metadata ->> 'chunk_id')) do nothing
+  returning id
+)
+select (select count(*) from ins)::int as inserted;`;
+
+// Même requête que les embeddings LangChain déjà en base (pas de taskType, sauts de ligne remplacés) : les anciens
+// et les nouveaux vecteurs restent comparables. Un seul appel pour tout le lot (40 morceaux).
+const EMBED_BODY = "{{ JSON.stringify({ requests: $input.all().map(i => ({ model: 'models/gemini-embedding-001', content: { role: 'user', parts: [{ text: String(i.json.embed_text).replace(/\\n/g, ' ') }] } })) }) }}";
 
 const ingestionB = `const gemini_fiche = ${gemini('Gemini (fiche)', 880, 220, 1536)};
-
-const gemini_Embeddings = embeddings({ type: '@n8n/n8n-nodes-langchain.embeddingsGoogleGemini', version: 1, config: { name: 'Embeddings Google Gemini', parameters: { modelName: 'models/gemini-embedding-001' }, credentials: { googlePalmApi: ${cred('gemini')} }, position: [880, 620] } });
-
-const splitter = textSplitter({ type: '@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter', version: 1, config: { name: 'Pas de redécoupage', parameters: { separator: '\\\\u0000', chunkSize: 20000, chunkOverlap: 0 }, position: [1040, 780], notes: 'Le découpage est déjà fait (workflow A).', notesInFlow: true } });
-
-const loader = documentLoader({ type: '@n8n/n8n-nodes-langchain.documentDefaultDataLoader', version: 1.1, config: { name: 'Document (contexte + chunk)', parameters: { dataType: 'json', jsonMode: 'expressionData', jsonData: expr('{{ $json.embed_text }}'), textSplittingMode: 'custom', options: { metadata: { metadataValues: [${metadataValues}] } } }, position: [1040, 620], subnodes: { textSplitter: splitter } } });
 
 const schedule = trigger({
   type: 'n8n-nodes-base.scheduleTrigger',
@@ -285,13 +287,17 @@ ${pg('reserver_morceaux', 'Réserver des morceaux', CLAIM_VEC_SQL, '{{ JSON.stri
 
 ${code('texte_a_vectoriser', 'Texte à vectoriser', 'embed-text.js', 660, 400)}
 
-const vectorisation = node({
-  type: '@n8n/n8n-nodes-langchain.vectorStoreSupabase',
-  version: 1.3,
-  config: { name: 'Vectorisation', parameters: { mode: 'insert', tableName: { __rl: true, mode: 'id', value: 'documents' }, embeddingBatchSize: 20, options: { queryName: 'match_documents' } }, credentials: { supabaseApi: ${cred('supabase')} }, retryOnFail: true, maxTries: 3, waitBetweenTries: 30000, onError: 'continueRegularOutput', position: [880, 400], notes: '6. Vectorisation : embeddings Gemini (3072 dim) → documents. Quota d’embeddings limité par minute (40 morceaux / 2 min). En cas d’échec, « Marquer done » ne valide que les morceaux dont le vecteur existe.', notesInFlow: true, subnodes: { embedding: gemini_Embeddings, documentLoader: loader } }
+const embeddings_http = node({
+  type: 'n8n-nodes-base.httpRequest',
+  version: 4.5,
+  config: { name: 'Embeddings Gemini (HTTP)', parameters: { method: 'POST', url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:batchEmbedContents', authentication: 'predefinedCredentialType', nodeCredentialType: 'googlePalmApi', sendBody: true, specifyBody: 'json', jsonBody: expr(${q(EMBED_BODY)}), options: {} }, credentials: { googlePalmApi: ${cred('gemini')} }, executeOnce: true, retryOnFail: true, maxTries: 3, waitBetweenTries: 30000, onError: 'continueRegularOutput', position: [880, 400], notes: '6. Vectorisation : un appel batchEmbedContents pour tout le lot (3072 dim). Quota limité par minute : 40 morceaux / 2 min ; 3 essais espacés de 30 s.', notesInFlow: true }
 });
 
-${pg('marquer_done', 'Marquer done', DONE_SQL, "{{ JSON.stringify($('Texte à vectoriser').all().map(i => i.json.chunk_id)) }}", 1100, 400, 'executeOnce: true, ')}
+${code('preparer_insertion', 'Préparer l’insertion', 'embed-rows.js', 1100, 400)}
+
+${pg('inserer_vecteurs', 'Insérer les vecteurs', INSERT_VECTORS_SQL, '{{ JSON.stringify($json.rows) }}', 1320, 400)}
+
+${pg('marquer_done', 'Marquer done', DONE_SQL, "{{ JSON.stringify($('Texte à vectoriser').all().map(i => i.json.chunk_id)) }}", 1540, 400, 'executeOnce: true, ')}
 
 const wf = workflow('rag48IngestB', 'RAG – B. Fiches + vectorisation', { description: 'Planifié : une fiche Gemini par chapitre, puis vectorisation des morceaux avec le contexte de leur chapitre.', executionOrder: 'v1' });
 
@@ -304,7 +310,7 @@ export default wf
   .to(fiche)
   .to(parser_fiche)
   .to(fiche_ok.onTrue(enregistrer_fiches).onFalse(fiches_en_erreur))
-  .add(config.to(reserver_morceaux).to(texte_a_vectoriser).to(vectorisation).to(marquer_done))
+  .add(config.to(reserver_morceaux).to(texte_a_vectoriser).to(embeddings_http).to(preparer_insertion).to(inserer_vecteurs).to(marquer_done))
 `;
 
 // =====================================================================================================

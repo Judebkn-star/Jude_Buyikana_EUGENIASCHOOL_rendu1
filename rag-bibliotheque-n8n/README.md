@@ -32,7 +32,7 @@ Le projet est né sur *Les 48 lois du pouvoir* (Robert Greene), puis a été gé
 | Workflow n8n | Déclencheur | Rôle |
 |---|---|---|
 | **A. Ajouter un livre** | formulaire | PDF → texte nettoyé → chapitres (table des matières lue par Gemini) → morceaux en file d'attente |
-| **B. Fiches + vectorisation** | toutes les 2 min | une fiche Gemini par chapitre, puis vecteurs de chaque morceau |
+| **B. Fiches + vectorisation** | toutes les 2 min | une fiche Gemini par chapitre, puis vecteurs de chaque morceau (appel HTTP direct à l'API d'embedding) |
 | **C. Chat bibliothèque** | chat n8n | historique → reformulation → recherche hybride → reranking → réponse sourcée |
 | **T. Test recherche** | manuel | une question → top 5 des passages, sans LLM |
 
@@ -112,7 +112,7 @@ node tests/run-eval.mjs           # 18 questions via le vrai chat (~54 appels Ge
 |---|---|
 | `scripts/start-env.sh` | démarre l'environnement sans exposer de port |
 | `scripts/build-workflows.mjs` | génère les 4 workflows depuis `src/` (prompts et SQL inclus) |
-| `scripts/post-push.mjs` | après un push : réépingle les données de test de A, fixe l'URL du chat, republie A, B, C |
+| `scripts/post-push.mjs` | après un push : retire tout épinglage de A, fixe l'URL du chat, republie A, B, C |
 | `scripts/ask.sh` / `scripts/chat.sh` | poser une question en ligne de commande / ouvrir le chat (`CHAT_URL=…` pour une autre adresse) |
 | `scripts/remove-book.sh` | retirer un livre (vecteurs, morceaux, fiche) |
 
