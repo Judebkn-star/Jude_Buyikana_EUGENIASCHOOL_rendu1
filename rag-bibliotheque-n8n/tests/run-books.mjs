@@ -30,4 +30,6 @@ r = run('Que raconte le livre sur Talleyrand et Vaux-le-Vicomte ?');
 assert.deepEqual(r.keywords, ['talleyrand', 'vaux', 'vicomte'], 'mots-clés : noms propres gardés, stopwords retirés');
 r = run('Que dit Machiavel sur la cruauté ?');
 assert.deepEqual(r.keywords, ['cruaute'], 'mots-clés : le nom de l’auteur nommé ne sert pas de mot-clé');
+r = run('Quels biais algorithmiques menacent les décisions de crédit ?', 'biais algorithmiques décisions de crédit The Art of War');
+assert.deepEqual(r.bookIds, [], 'un titre ajouté par la reformulation ne filtre pas la recherche');
 console.log('run-books : OK');

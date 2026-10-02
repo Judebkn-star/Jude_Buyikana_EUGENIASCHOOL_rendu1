@@ -13,14 +13,17 @@ const text = `${question} ${query}`;
 const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const STOP = new Set(['le', 'la', 'les', 'de', 'des', 'du', 'un', 'une', 'the', 'of', 'a', 'an', 'and', 'et', 'l', 'd', 'sur', 'on']);
 const nq = ` ${norm(text)} `;
+// Le livre nommé se cherche dans la question de l'utilisateur seulement : la reformulation de Gemini ajoute parfois
+// un titre de la bibliothèque de son propre chef, ce qui enfermerait à tort la recherche dans ce livre.
+const nqUser = ` ${norm(question)} `;
 
 const named = books.filter((b) => {
   const title = norm(b.title).replace(/^(le|la|les|l|the|a|an) /, '');
-  if (title.length >= 4 && nq.includes(` ${title} `)) return true;
+  if (title.length >= 4 && nqUser.includes(` ${title} `)) return true;
   const surname = norm(b.author).split(' ').pop();
-  if (surname && surname.length >= 4 && nq.includes(` ${surname} `)) return true;
+  if (surname && surname.length >= 4 && nqUser.includes(` ${surname} `)) return true;
   const words = norm(b.title).split(' ').filter((w) => w.length >= 2 && !STOP.has(w));
-  const hits = words.filter((w) => nq.includes(` ${w} `));
+  const hits = words.filter((w) => nqUser.includes(` ${w} `));
   return words.length >= 2 && hits.length >= 2 && hits.length / words.length >= 0.6;
 });
 

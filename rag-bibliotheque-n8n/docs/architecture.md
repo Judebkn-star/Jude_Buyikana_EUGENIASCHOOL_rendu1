@@ -54,9 +54,9 @@ Garde-fous :
 |---|---|
 | Historique | 12 derniers messages de la session (table `n8n_chat_histories`) |
 | Reformulation | Gemini rend la question autonome ; une situation personnelle devient des notions que les livres traitent |
-| Livres et chapitres cités | Code `src/answer-books.js` : livre nommé (titre ou auteur) → filtre ; « loi 15 », « chapitre III » → fiche et début du chapitre ajoutés d'office ; mots-clés pour le plein texte |
+| Livres et chapitres cités | Code `src/answer-books.js` : livre nommé dans la question de l'utilisateur (titre ou auteur) → filtre ; « loi 15 », « chapitre III » → fiche et début du chapitre ajoutés d'office ; mots-clés pour le plein texte |
 | Vecteur de la question | Appel direct à l'API d'embedding, identique à celui des documents |
-| Recherche hybride | `search_hybrid` : top 40 vectoriel + top 40 plein texte, fusionnés par Reciprocal Rank Fusion |
+| Recherche hybride | `search_hybrid` : top 40 vectoriel + top 40 plein texte, fusionnés par Reciprocal Rank Fusion. Le plein texte couvre le texte du livre (poids D) et les mots-clés de la fiche, le titre du chapitre et les personnes citées (poids A, 10 fois plus) ; recherche par préfixe (« éthiques » trouve « éthique ») |
 | Candidats | Code `src/answer-candidates.js` : 4 passages au plus par chapitre, 15 au total |
 | Reranking | Gemini note chaque candidat de 0 à 10 ; on garde le top 5 au-dessus de 5 |
 | Génération | Réponse en français, sourcée ; si des passages sont retenus, le modèle n'a pas l'option de refuser |
